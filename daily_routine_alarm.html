@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DailyRoutine Alarm Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    body.dark .card { background: #1e293b; }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .time-box { font-size: 18px; font-weight: bold; }
+    .quote { font-size: 14px; opacity: 0.8; }
+
+    .premium-badge { background:#facc15; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold; }
+    .btn { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; background:#4f46e5; color:#fff; }
+
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    form input, form select, form textarea, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+    form textarea { grid-column: span 2; resize: none; }
+    form button { grid-column: span 2; background: #4f46e5; color: #fff; }
+
+    .timeline { display: flex; flex-direction: column; gap: 12px; }
+    .task { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-left: 5px solid #4f46e5; background: #f9fafb; border-radius: 10px; }
+    body.dark .task { background:#0f172a; }
+    .task.done { text-decoration: line-through; opacity: 0.6; }
+
+    .premium-box { border: 2px dashed #facc15; padding: 16px; border-radius: 12px; text-align: center; }
+
+    @media (max-width: 600px) { form { grid-template-columns: 1fr; } form textarea, form button { grid-column: span 1; } }
+
+    /* Static info pages */
+    .static-page { margin-top: 10px; }
+    .footer { text-align:center; font-size: 14px; }
+    .footer a { margin: 0 6px; color:#4f46e5; text-decoration:none; }
+    body.dark .footer a { color:#a5b4fc; }
+    .static-page h2 { margin-top:0; } form textarea, form button { grid-column: span 1; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="card top-bar">
+      <div>
+        <h1>DailyRoutine Alarm Planner <span class="premium-badge" id="premiumLabel"></span></h1>
+        <div class="quote" id="quote">Stay consistent, stay strong.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="time-box" id="clock"></div>
+        <button class="btn" onclick="toggleDarkMode()">🌙</button>
+      </div>
+    </div>
+
+    <!-- Premium Upgrade Box -->
+    <div class="card premium-box" id="premiumBox">
+      <h3>Upgrade to Premium</h3>
+      <p>Unlock Dark Mode, Unlimited Tasks, Weekly Planner & Backup.</p>
+      <button class="btn" onclick="payNow()">Get Premium @ ₹199</button>
+    </div>
+
+    <!-- Task Form -->
+    <div class="card">
+      <h2>Create New Task</h2>
+      <form id="taskForm">
+        <input type="text" id="title" placeholder="Task Title" required />
+        <input type="time" id="time" required />
+        <select id="category">
+          <option>Work</option><option>Study</option><option>Health</option><option>Personal</option>
+        </select>
+        <select id="priority"><option>High</option><option>Medium</option><option>Low</option></select>
+        <textarea id="description" placeholder="Task Description"></textarea>
+        <button type="submit">Add Task</button>
+        <small id="taskLimitNote"></small>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Today's Timeline</h2>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Weekly Planner (Premium) -->
+    <div class="card" id="weeklyPlanner" style="display:none;">
+      <h2>Weekly Planner (Premium)</h2>
+      <p>Plan your full week here (feature unlocked).</p>
+    </div>
+
+  </div>
+
+  <footer class="card footer">
+    <span>&copy; <span id="year"></span> DailyRoutine Alarm Planner</span>
+    <div>
+      <a href="#about">About</a>|
+      <a href="#privacy">Privacy Policy</a>|
+      <a href="#contact">Contact</a>
+    </div>
+  </footer>
+
+  <section id="about" class="card static-page">
+    <h2>About</h2>
+    <p>DailyRoutine Alarm Planner is a simple productivity tool built to help you plan your day, stay on track with your tasks, and receive reminder alarms at the right time. You can create tasks, mark them as done, and upgrade to premium for extra features like dark mode and weekly planning.</p>
+    <p>This is an independent personal project and is not part of any large company. It is designed mainly for students, professionals and anyone who wants a clean, distraction-free daily routine planner in their browser.</p>
+  </section>
+
+  <section id="privacy" class="card static-page">
+    <h2>Privacy Policy</h2>
+    <p>We respect your privacy. This website stores your tasks, premium status and dark mode preference only inside your browser using local storage. We do not knowingly collect or store your personal data on any external server.</p>
+    <p><strong>Information Stored Locally:</strong> Your task titles, times, categories, completion status and premium flag are saved in your browser so that your routine is not lost when you close the tab. You can clear your browser data at any time to remove this information.</p>
+    <p><strong>Payments:</strong> When you click the premium payment button, you are redirected to Razorpay for payment processing. That payment is handled on Razorpay&apos;s secure pages. We do not receive or store your card, UPI or bank details on this website.</p>
+    <p><strong>Cookies &amp; Ads:</strong> In the future, we may show third-party advertisements (for example, from Google AdSense). Those providers may use cookies or similar technologies to show relevant ads. You can control cookies from your browser settings.</p>
+    <p><strong>Changes:</strong> This privacy policy may be updated from time to time. Continued use of the site means you accept the latest version of this policy.</p>
+  </section>
+
+  <section id="contact" class="card static-page">
+    <h2>Contact</h2>
+    <p>If you have any questions, feedback or issues with DailyRoutine Alarm Planner, you can contact the developer.</p>
+    <ul>
+      <li>Email: <a href="mailto:ruhul1239sk@gmail.com">ruhul1239sk@gmail.com</a></li>
+      <li>GitHub: <a href="https://github.com/ruhul1239sk-lgtm" target="_blank">@ruhul1239sk-lgtm</a></li>
+    </ul>
+    <p>You can also share your suggestions or bug reports so that the app can be improved over time.</p>
+  </section>
+
+  <audio id="alarmSound"><source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg"></audio>
+
+  <script>
+    let isPremium = JSON.parse(localStorage.getItem('isPremium')) || false;
+    const premiumLabel = document.getElementById('premiumLabel');
+    const premiumBox = document.getElementById('premiumBox');
+    const weeklyPlanner = document.getElementById('weeklyPlanner');
+    const taskLimitNote = document.getElementById('taskLimitNote');
+
+    function refreshPremiumUI() {
+      if (isPremium) {
+        premiumLabel.innerText = 'PREMIUM';
+        premiumBox.style.display = 'none';
+        weeklyPlanner.style.display = 'block';
+        document.body.classList.toggle('dark', localStorage.getItem('darkMode') === 'true');
+        taskLimitNote.innerText = '';
+      } else {
+        premiumLabel.innerText = 'FREE';
+        premiumBox.style.display = 'block';
+        weeklyPlanner.style.display = 'none';
+        taskLimitNote.innerText = 'Free version: Max 5 tasks only';
+      }
+    }
+
+    function payNow() {
+      // Activate premium immediately for this device
+      isPremium = true;
+      localStorage.setItem('isPremium', true);
+      refreshPremiumUI();
+
+      // Open Razorpay payment link in new tab
+      try {
+        window.open('https://razorpay.me/@imtiajsk', '_blank');
+      } catch (e) {
+        alert('Payment link blocked by browser. Please allow popups and try again.');
+      }
+
+      alert('Premium unlocked on this device. Please complete the payment in the new tab.');
+    }
+
+    function toggleDarkMode() {
+      if (!isPremium) return alert('Dark mode is Premium feature');
+      const enabled = document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', enabled);
+    }
+
+    const form = document.getElementById('taskForm');
+    const timeline = document.getElementById('timeline');
+    const alarmSound = document.getElementById('alarmSound');
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+
+    function renderTasks() {
+      timeline.innerHTML = '';
+      tasks.sort((a, b) => a.time.localeCompare(b.time));
+      tasks.forEach((task, index) => {
+        const div = document.createElement('div');
+        div.className = 'task' + (task.done ? ' done' : '');
+        div.innerHTML = `
+          <div>
+            <strong>${task.time} - ${task.title}</strong>
+            <small>${task.category} | ${task.priority}</small>
+          </div>
+          <div>
+            <button onclick="markDone(${index})">Done</button>
+            <button onclick="deleteTask(${index})">Delete</button>
+          </div>`;
+        timeline.appendChild(div);
+      });
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!isPremium && tasks.length >= 5) return alert('Upgrade to Premium to add unlimited tasks');
+
+      const task = { title: title.value, time: time.value, category: category.value, priority: priority.value, done: false, notified: false };
+      tasks.push(task);
+      saveTasks(); renderTasks(); form.reset();
+    });
+
+    function markDone(i) { tasks[i].done = true; saveTasks(); renderTasks(); }
+    function deleteTask(i) { tasks.splice(i, 1); saveTasks(); renderTasks(); }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toDateString() + ' | ' + now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000); updateClock();
+      document.getElementById('year').innerText = new Date().getFullYear();
+
+    if ('Notification' in window) Notification.requestPermission();
+
+    function startAlarm(taskTitle) {
+      try {
+        alarmSound.currentTime = 0;
+      } catch(e) {}
+      alarmSound.loop = true;
+      alarmSound.play();
+      setTimeout(() => {
+        alarmSound.pause();
+        alarmSound.currentTime = 0;
+        alarmSound.loop = false;
+      }, 30000); // 30s alarm duration
+    }
+
+    function alarmChecker() {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      tasks.forEach((task) => {
+        if (!task.done && !task.notified && task.time === currentTime) {
+          task.notified = true;
+          saveTasks();
+          startAlarm(task.title);
+          if (Notification.permission === 'granted') {
+            new Notification('Task Reminder', { body: task.title });
+          }
+        }
+      });
+    }
+    setInterval(alarmChecker, 1000);
+
+    refreshPremiumUI();
+    renderTasks();
+
+    // Debug helper: show current premium state in console
+    console.log('Premium status:', isPremium);
+  </script>
+</body>
+</html>
